@@ -1,0 +1,11 @@
+C:\github\TestPrint\TestPrint\bin\Release\TestPrint.exe.config
+C:\github\TestPrint\TestPrint\bin\Release\TestPrint.exe
+C:\github\TestPrint\TestPrint\bin\Release\TestPrint.pdb
+C:\github\TestPrint\TestPrint\bin\Release\GoMarket.Devices.dll
+C:\github\TestPrint\TestPrint\bin\Release\GoMarket.LogSystem.dll
+C:\github\TestPrint\TestPrint\obj\Release\TestPrint.csprojResolveAssemblyReference.cache
+C:\github\TestPrint\TestPrint\obj\Release\TestPrint.Form1.resources
+C:\github\TestPrint\TestPrint\obj\Release\TestPrint.Properties.Resources.resources
+C:\github\TestPrint\TestPrint\obj\Release\TestPrint.csproj.GenerateResource.Cache
+C:\github\TestPrint\TestPrint\obj\Release\TestPrint.exe
+C:\github\TestPrint\TestPrint\obj\Release\TestPrint.pdb

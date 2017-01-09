@@ -1,0 +1,125 @@
+public static void ClearIncome2()
+        {
+            if (MainPage.Instance.GetOnHoldCounts() > 0)
+            {
+                Logger.Info("BLL", "{0} on hold orders not handled!", MainPage.Instance.GetOnHoldCounts());
+                throw new InvalidOperationException();
+            }
+            int totalOrders = Cache.Admin.TotalOrders;
+            double creditCardIncome = Cache.Admin.CreditCardIncome;
+            double wechatCardIncome = Cache.Admin.WechatIncome;
+            double alipayCardIncome = Cache.Admin.AlipayIncome;
+            double memberIncome = Cache.Admin.MemberIncome;
+
+            double onCashDeliveryIncome = Cache.Admin.OnCashDeliverIncome;
+            double onAliPayIncome = Cache.Admin.OnAliPayIncome;
+            double refundAmount = Cache.Admin.RefundAmount;
+            double cashIncome = Cache.Admin.CashIncome;
+            double totalIncome = Cache.Admin.TotalIncome;
+            double alternateAmounts = Cache.AlternateAmounts;
+            double lastAlternateAmounts = Config.Instance.LocalInfo.LastAlternateAmounts;
+            DateTime loginTime = Cache.Admin.LastLoginTime.Value;
+            DateTime logoutTime = Cache.Admin.LastLogoutTime.Value;
+            List<String> logList = new List<String>();
+            try
+            {
+                Cache.Admin.CreateQuery().Update().Where("adminName=@adminName", new MySqlParameter("adminName", Cache.Admin.AdminName)).Execute();
+                Log log = new Log();
+                log.CreateQuery().Select().ExecuteCallback();
+                while (log.Read())
+                {
+                    Logger.Info("BLL", "打印的集合{0}", log.Logn);
+                    logList.Add(log.Logn);
+                }
+                if (logList != null)
+                {
+                    foreach (String lo in logList)
+                    {
+                        Logger.Info("BLL", "打印的集合2{0}", lo);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("BLL", "ERROR: {0}", ex);
+            }
+            Logger.Info("BLL", "alternates: {0}, {1}", lastAlternateAmounts, alternateAmounts);
+            try
+            {
+                Logger.Info("BLL", "交班begin:");
+                Logger.Info("BLL", "开单张数:{0}", totalOrders);
+                Logger.Info("BLL", "银行卡营收:{0}", creditCardIncome);
+                Logger.Info("BLL", "微信营收:{0}", wechatCardIncome);
+                Logger.Info("BLL", "支付宝营收:{0}", alipayCardIncome);
+                Logger.Info("BLL", "现金营收:{0}", cashIncome);
+                Logger.Info("BLL", "线上货到付款:{0}", onCashDeliveryIncome);
+                Logger.Info("BLL", "线上支付宝:{0}", onAliPayIncome);
+                Logger.Info("BLL", "汇总营收:{0}", totalIncome);
+                Logger.Info("BLL", "退单金额:{0}", refundAmount);
+                Logger.Info("BLL", "会员支付营收:{0}", memberIncome);
+                Logger.Info("BLL", "上次备用金:{0}", lastAlternateAmounts);
+                Logger.Info("BLL", "本次备用金:{0}", alternateAmounts);
+                Logger.Info("BLL", "交班end");
+                ESCPOS.Open();
+                StringFormat fmt = new StringFormat();
+                ////格式化数字
+                fmt.Alignment = StringAlignment.Far;
+                Bitmap bm = new Bitmap(576, 64);
+                Graphics g = Graphics.FromImage(bm);
+                g.Dispose();
+                //ESCPOS.SetTextMode(true, true, true, false, true);
+                //ESCPOS.SetAlignment(1);
+                AgainPrint againPrint = new AgainPrint();
+                againPrint.drawFirstLineString(g, "                 收银员交班明细\n");
+                //ESCPOS.SetAlignment(0);
+                //ESCPOS.SetTextMode(true, false, false, false, false);
+                //ESCPOS.Write("================================================\n");
+                againPrint.drawFirstLineString(g,string.Format("收银员：[{0}]\n", Cache.Admin.RealName));
+                againPrint.drawFirstLineString(g,string.Format("当班时间：{0:D4}-{1:D2}-{2:D2} {3:D2}:{4:D2}:{5:D2}\n", loginTime.Year, loginTime.Month, loginTime.Day, loginTime.Hour, loginTime.Minute, loginTime.Second));
+                againPrint.drawFirstLineString(g,string.Format("      至：{0:D4}-{1:D2}-{2:D2} {3:D2}:{4:D2}:{5:D2}\n", logoutTime.Year, logoutTime.Month, logoutTime.Day, logoutTime.Hour, logoutTime.Minute, logoutTime.Second));
+                //ESCPOS.Write("________________________________________________\n\n");
+                againPrint.drawPrint(g, fmt, "开张单数：", totalOrders.ToString(), "张");
+                againPrint.drawPrint(g, fmt, "银行卡营收：", creditCardIncome.ToString(), "元");
+                againPrint.drawPrint(g, fmt, "微信营收：", wechatCardIncome.ToString(), "元");
+                againPrint.drawPrint(g, fmt, "支付宝营收：",alipayCardIncome.ToString(),"元");
+                againPrint.drawPrint(g, fmt, "现金营收：", cashIncome.ToString(), "元");
+                againPrint.drawPrint(g, fmt, "线上货到付款营收：", onCashDeliveryIncome.ToString(), "元");
+                againPrint.drawPrint(g, fmt, "会员营收：", memberIncome.ToString(), "元");
+                againPrint.drawPrint(g, fmt, "线上支付宝营收：", onAliPayIncome.ToString(), "元");
+
+                againPrint.drawPrint(g, fmt, "汇总营收：", totalIncome.ToString(), "元");
+                if (logList != null)
+                {
+                    if (logList.Count > 0)
+                    {
+                        againPrint.drawFirstLineString(g, "记录：");
+
+                        foreach (String lo in logList)
+                        {
+                            Logger.Info("BLL", "打印小票记录:{0}", lo);
+                            //ESCPOS.Write(lo);
+                            //ESCPOS.Write("\n");
+                            againPrint.drawFirstLineString(g,lo);
+                        }
+                        logList.Clear();
+                    }
+                }
+                againPrint.drawPrint(g, fmt, "退单金额：", refundAmount.ToString(), "元");
+                againPrint.drawPrint(g, fmt, "上次备用金：", string.Format("{0:N2}", lastAlternateAmounts), "元");
+                againPrint.drawPrint(g, fmt, "本次备用金：", string.Format("{0:N2}\n", alternateAmounts), "元");
+
+                againPrint.drawFirstLineString(g,"备注：\n");
+                ESCPOS.Feed(10);
+                againPrint.drawFirstLineString(g,"收银员签名：            财务签名：\n");
+                ESCPOS.Feed(5);
+                againPrint.drawFirstLineString(g,string.Format("打印时间：{0:D4}-{1:D2}-{2:D2} {3:D2}:{4:D2}:{5:D2}\n", DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second));
+                ESCPOS.Feed(10);
+                ESCPOS.CutPapper();
+                ESCPOS.Close();
+                Logger.Info("BLL", "ESCPOS.Close");
+            }
+            catch
+            {
+                Logger.Error("BLL", "ERROR: 交班小票");
+            }
+        }
